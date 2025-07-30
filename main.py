@@ -1,49 +1,6 @@
 import pandas as pd
 from utils import process_all_files, save_text
-
-# Define column boundaries: (x0, top, x1, bottom)
-column_coords = [
-    (0, 80, 222, 677),     # Left column
-    (222, 80, 404, 677),   # Middle column
-    (404, 80, 612, 677)    # Right column
-]
-
-# Configuration - specify files with their categories, pages, and provider types
-file_page_config = [
-    {
-        "file": "input/NY-EP-Provider-Directory-Bronx 1.pdf",
-        "categories": [
-            {"pages": [1], "provider_category": "PCP"},
-            {"pages": [2], "provider_category": "Specialist"},
-            {"pages": [3], "provider_category": "Mental Health"}
-        ]
-    },
-    {
-        "file": "input/NY-EP-Provider-Directory-Bronx 1-1.pdf",
-        "categories": [
-            {"pages": [1], "provider_category": "PCP"},
-            {"pages": [2], "provider_category": "Specialist"},
-            {"pages": [3], "provider_category": "Mental Health"}
-        ]
-    },
-    {
-        "file": "input/NY-EP-Provider-Directory-Upstate-West 1.pdf",
-        "categories": [
-            {"pages": [1], "provider_category": "PCP"},
-            {"pages": [2], "provider_category": "Specialist"},
-            {"pages": [3], "provider_category": "Mental Health"}
-        ]
-    },
-    {
-        "file": "input/test.pdf",
-        "categories": [
-            {"pages": [1], "provider_category": "PCP"},
-            {"pages": [2], "provider_category": "Specialist"},
-            {"pages": [3], "provider_category": "Mental Health"}
-        ]
-    }
-]
-specialty_threshold = 12.25  # Adjust as needed based on your font size analysis
+from config import column_coords, file_page_config, specialty_threshold
 
 
 def main():

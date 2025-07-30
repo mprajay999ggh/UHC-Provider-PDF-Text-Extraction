@@ -207,9 +207,41 @@ def parse_entry(text, provider_category="PCP"):
         result['Phone'] = phone_match.group(0)
 
     # Languages
-    lang_match = re.search(r"Languages Spoken:.*?Provider:\s*([A-Za-z,\s]+)", text)
+    lang_match = re.search(r"Languages Spoken:(.*?)(?=Mo-|Tu-|We-|Th-|Fr-|Sa-|Su-|Hospital|Areas|Web|Accepting|$)", text, re.DOTALL)
     if lang_match:
-        result['Languages'] = [lang.strip() for lang in lang_match.group(1).split(",")]
+        languages_section = lang_match.group(1).strip()
+        
+        # Extract Provider languages
+        provider_match = re.search(r"Provider:\s*([A-Za-z,\s\n]+?)(?=\s*(?:Staff|Interpreter)|$)", languages_section, re.DOTALL)
+        provider_languages = ""
+        if provider_match:
+            provider_text = re.sub(r'\s+', ' ', provider_match.group(1).strip())
+            provider_languages = ", ".join([lang.strip() for lang in provider_text.split(",") if lang.strip()])
+        
+        # Extract Staff languages
+        staff_match = re.search(r"Staff:\s*([A-Za-z,\s\n]+?)(?=\s*Interpreter|$)", languages_section, re.DOTALL)
+        staff_languages = ""
+        if staff_match:
+            staff_text = re.sub(r'\s+', ' ', staff_match.group(1).strip())
+            staff_languages = ", ".join([lang.strip() for lang in staff_text.split(",") if lang.strip()])
+        
+        # Extract Interpreter languages
+        interpreter_match = re.search(r"Interpreter:\s*([A-Za-z,\s\n]+?)(?=$)", languages_section, re.DOTALL)
+        interpreter_languages = ""
+        if interpreter_match:
+            interpreter_text = re.sub(r'\s+', ' ', interpreter_match.group(1).strip())
+            interpreter_languages = ", ".join([lang.strip() for lang in interpreter_text.split(",") if lang.strip()])
+        
+        # Combine all sections
+        language_parts = []
+        if provider_languages:
+            language_parts.append(f"[Provider: {provider_languages}]")
+        if staff_languages:
+            language_parts.append(f"[Staff: {staff_languages}]")
+        if interpreter_languages:
+            language_parts.append(f"[Interpreter: {interpreter_languages}]")
+        
+        result['Languages'] = " ".join(language_parts) if language_parts else []
 
     # ADA Features
     ada_matches = re.findall(r"\b(W|PT|B|P|EB|IB|R|E|T|G|PL|RE|S)\b", text)
@@ -250,9 +282,11 @@ def parse_entry(text, provider_category="PCP"):
         result['Provider_Specialty'] = value if value else None
 
     # Web Address
-    web_match = re.search(r"Web address:\s*(\S+)", text)
+    web_match = re.search(r"Web address:\s*(.*?)(?=\s*(?:Languages|Cultural|Areas of Expertise|Areas|Hospital Affiliations|Accepting|Provider|$))", text, re.DOTALL)
     if web_match:
-        result['Web_Address'] = web_match.group(1).strip()
+        # Clean up the web address by removing line breaks and extra spaces
+        web_address = re.sub(r'\s+', '', web_match.group(1).strip())
+        result['Web_Address'] = web_address
 
     # Areas of Expertise
     expertise_match = re.search(r"Areas of Expertise:\s*(.*)", text)
@@ -281,7 +315,7 @@ def process_single_category(input_file, page_numbers, provider_category, special
                 print(f"Page {page_num} not found in {input_file}")
                 continue
                 
-            page = pdf.pages[page_num - 1]
+            page = pdf.pages[page_num-1]
             print(f"Processing page {page_num}")
             
             # Extract specialty headers
@@ -350,7 +384,7 @@ def process_single_file(input_file, categories, specialty_threshold, column_coor
     # Save combined text for this file
     file_name = input_file.split('/')[-1].replace('.pdf', '')
     all_combined_text = "\n\n".join(all_entries)
-    save_text(all_combined_text, f"combined_text_{file_name}.txt")
+    #save_text(all_combined_text, f"combined_text_{file_name}.txt")
     
     return all_entries, all_specialty_lines, all_parsed_data
 
